@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Từ Điển Âm Thanh Tiếng Êđê</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e67e22;
+            --text: #34495e;
+            --container-bg: rgba(255, 255, 255, 0.92);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 20px 10px;
+            color: var(--text);
+            min-height: 100vh;
+            box-sizing: border-box;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('background.webp') no-repeat center center;
+            background-size: cover;
+            filter: blur(8px);
+            z-index: -1;
+            transform: scale(1.1);
+        }
+
+        .dictionary-container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--container-bg);
+            padding-bottom: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+
+        .banner-img {
+            width: 100%;
+            display: block;
+            margin-bottom: 25px;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .content-padding {
+            padding: 0 30px;
+        }
+
+        .mode-switch {
+            display: flex;
+            background: #eee;
+            padding: 5px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-switch label {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .mode-switch input:checked+span {
+            background: white;
+            color: var(--accent);
+            display: block;
+            border-radius: 8px;
+            padding: 10px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .mode-switch input {
+            display: none;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        input#userInput {
+            width: 100%;
+            padding: 14px 45px 14px 15px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        #micBtn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .search-btn {
+            padding: 0 25px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #result-area {
+            margin-top: 25px;
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .result-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fffbf5;
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 6px solid var(--accent);
+        }
+
+        .word-info h2 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        .audio-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .error-msg {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dictionary-container">
+        <img src="banner.jpg" alt="Banner" class="banner-img">
+        <div class="content-padding">
+            <div class="mode-switch">
+                <label><input type="radio" name="mode" value="vi-to-ede" checked><span>🇻🇳 Việt → Êđê</span></label>
+                <label><input type="radio" name="mode" value="ede-to-vi"><span>⛰️ Êđê → Việt</span></label>
+            </div>
+
+            <div class="search-box">
+                <div class="input-wrapper">
+                    <input type="text" id="userInput" placeholder="Nhập từ hoặc câu..." autocomplete="off">
+                    <button id="micBtn">🎤</button>
+                </div>
+                <button class="search-btn" onclick="handleSearch()">Tra cứu</button>
+            </div>
+
+            <div id="result-area">
+                <div class="result-card">
+                    <div class="word-info">
+                        <p id="labelResult" style="font-size: 12px; color: #999; text-transform: uppercase;">Kết quả:
+                        </p>
+                        <h2 id="translatedWord">---</h2>
+                    </div>
+                    <button class="audio-btn" onclick="playCurrentAudio()">🔊</button>
+                </div>
+            </div>
+            <div id="errorArea" class="error-msg"></div>
+        </div>
+    </div>
+
+    <script src="dictionary.js"></script>
+    <script src="speech-control.js"></script>
+    <script>
+        const reverseDictionary = {};
+    for (let key in dictionary) {
+        reverseDictionary[dictionary[key].toLowerCase().trim()] = key.toLowerCase().trim();
+    }
+
+    let audioSequence = [];
+
+    function translateSentence(sentence, dict) {
+        const words = sentence.split(/\s+/);
+        const result = [];
+        const foundAudioBases = [];
+        let i = 0;
+
+        while (i < words.length) {
+            let matched = false;
+            for (let len = 10; len > 0; len--) {
+                const slice = words.slice(i, i + len).join(" ");
+                if (dict[slice]) {
+                    result.push(dict[slice]);
+                    foundAudioBases.push(removeVietnameseTones(slice));
+                    i += len;
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) return null;
+        }
+        return { text: result.join(" "), audioBases: foundAudioBases };
+    }
+
+    function handleSearch() {
+        const input = document.getElementById("userInput").value.trim().toLowerCase();
+        const resultArea = document.getElementById("result-area");
+        const errorArea = document.getElementById("errorArea");
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const dict = (mode === "vi-to-ede") ? dictionary : reverseDictionary;
+
+        errorArea.textContent = "";
+        resultArea.style.display = "none";
+        audioSequence = [];
+
+        if (!input) return;
+
+        let translationData = translateSentence(input, dict);
+
+        if (translationData) {
+            document.getElementById("translatedWord").textContent = translationData.text;
+            document.getElementById("labelResult").textContent = mode === "vi-to-ede" ? "Tiếng Êđê:" : "Tiếng Việt:";
+            resultArea.style.display = "block";
+            
+            if (mode === "vi-to-ede") {
+                audioSequence = translationData.audioBases;
+            } else {
+                audioSequence = translationData.text.split(/\s+/).map(word => {
+                    return removeVietnameseTones(reverseDictionary[word.toLowerCase()] || "");
+                }).filter(base => base !== "");
+            }
+        } else {
+            errorArea.textContent = "❌ Xin lỗi, không thể dịch chuỗi từ này.";
+        }
+    }
+
+    function removeVietnameseTones(str) {
+        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/\s+/g, '-').toLowerCase();
+    }
+
+    function playCurrentAudio() {
+        if (audioSequence.length === 0) return;
+        
+        let index = 0;
+        const formats = ['.mp3', '.m4a'];
+
+        function playNextWord() {
+            if (index >= audioSequence.length) return;
+
+            const baseName = audioSequence[index];
+            let formatIndex = 0;
+
+            function tryFormat() {
+                if (formatIndex >= formats.length) {
+                    console.warn(`Không tìm thấy file cho: ${baseName}`);
+                    index++;
+                    playNextWord();
+                    return;
+                }
+
+                let audio = new Audio(`audio/${baseName}${formats[formatIndex]}`);
+                audio.onended = () => {
+                    index++;
+                    playNextWord();
+                };
+                audio.play().catch(() => {
+                    formatIndex++;
+                    tryFormat();
+                });
+            }
+            tryFormat();
+        }
+        playNextWord();
+    }
+
+    document.getElementById("userInput").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") handleSearch();
+    });
+    </script>
+</body>
+
+</html>
