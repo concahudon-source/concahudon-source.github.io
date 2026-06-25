@@ -239,6 +239,7 @@
                 const slice = words.slice(i, i + len).join(" ");
                 if (dict[slice]) {
                     result.push(dict[slice]);
+                    // Lưu trữ danh sách file âm thanh của các từ ghép được
                     foundAudioBases.push(removeVietnameseTones(slice));
                     i += len;
                     matched = true;
@@ -270,9 +271,11 @@
             document.getElementById("labelResult").textContent = mode === "vi-to-ede" ? "Tiếng Êđê:" : "Tiếng Việt:";
             resultArea.style.display = "block";
             
+            // Chuẩn bị danh sách âm thanh để phát lần lượt
             if (mode === "vi-to-ede") {
                 audioSequence = translationData.audioBases;
             } else {
+                // Nếu dịch ngược, cần chuyển các từ Êđê vừa dịch được về tiếng Việt để tìm file mp3
                 audioSequence = translationData.text.split(/\s+/).map(word => {
                     return removeVietnameseTones(reverseDictionary[word.toLowerCase()] || "");
                 }).filter(base => base !== "");
